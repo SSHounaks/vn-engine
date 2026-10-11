@@ -6,6 +6,7 @@ import com.vnengine.dsl.game
 import com.vnengine.engine.GameEngine
 import com.vnengine.engine.GameVars
 import com.vnengine.save.SaveSlotManager
+import com.vnengine.save.SaveSlot
 import com.vnengine.save.SaveSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,13 +31,13 @@ class PackStatsTest {
 
 class SaveSlotInfoTest {
     @Test
-    fun getSlotInfoReturnsJsonAfterSaveAndNullOtherwise() {
+    fun infoReturnsMetadataAfterSaveAndNullOtherwise() {
         val engine = GameEngine(game { scene("start") { dialogue("n", "hi") } }, FakeAudioManager())
         val manager = SaveSlotManager(engine, SaveSystem())
         engine.start()
-        assertNull(manager.getSlotInfo(0))
+        assertNull(manager.info(SaveSlot.Manual(1)))
         manager.quickSave()
-        assertNotNull(manager.getSlotInfo(0))
+        assertNotNull(manager.info(SaveSlot.Quick))
     }
 }
 

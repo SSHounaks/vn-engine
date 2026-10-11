@@ -27,7 +27,7 @@ class SaveSystemTest {
         engine.start()
         engine.advance()
 
-        val saved = SaveSystem().save(engine.state.value, 0)
+        val saved = SaveSystem().save(engine.state.value)
 
         engine.advance()
         engine.advance()

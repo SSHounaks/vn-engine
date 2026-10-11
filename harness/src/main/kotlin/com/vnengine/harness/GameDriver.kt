@@ -9,7 +9,12 @@ import com.vnengine.engine.GameVars
 import com.vnengine.engine.SceneFrame
 import com.vnengine.engine.SceneVisual
 import com.vnengine.engine.VarKey
+import com.vnengine.save.InMemorySaveStorage
+import com.vnengine.save.SaveSlot
+import com.vnengine.save.SaveSlotManager
+import com.vnengine.save.SaveStorage
 import com.vnengine.save.SaveSystem
+import com.vnengine.save.SlotInfo
 
 /**
  * Thin, fluent driver around [GameEngine] for content-level tests: it exposes
@@ -18,10 +23,15 @@ import com.vnengine.save.SaveSystem
 class GameDriver(
     val script: SceneScript,
     val audio: RecordingAudioManager = RecordingAudioManager(),
-    pack: Pack? = null
+    pack: Pack? = null,
+    storage: SaveStorage = InMemorySaveStorage(),
+    clock: () -> Long = { 0L }
 ) {
     val engine = GameEngine(script, audio, pack)
     private val saveSystem = SaveSystem()
+
+    /** Fixed-slot save/load manager backed by [storage]. */
+    val saves = SaveSlotManager(engine, saveSystem, storage, clock = clock)
 
     val state: GameState get() = engine.state.value
     val frame: SceneFrame get() = engine.frame.value
@@ -67,13 +77,20 @@ class GameDriver(
     fun boolValue(key: VarKey<Boolean>): Boolean = value(key)
     fun stringValue(key: VarKey<String>): String = value(key)
 
-    fun save(slot: Int = 0): String = saveSystem.save(state, slot)
+    fun save(savedAt: Long = 0L): String = saveSystem.save(state, savedAt = savedAt)
 
     fun load(saveJson: String): Boolean {
         val restored = saveSystem.load(saveJson) ?: return false
         engine.loadState(restored)
         return true
     }
+
+    fun quickSave(): Boolean = saves.quickSave()
+    fun quickLoad(): Boolean = saves.quickLoad()
+    fun saveToSlot(index: Int): Boolean = saves.saveToSlot(index)
+    fun loadFromSlot(index: Int): Boolean = saves.loadFromSlot(index)
+    fun slotInfo(index: Int): SlotInfo? = saves.info(SaveSlot.Manual(index))
+    fun slotInfos(): List<SlotInfo?> = saves.infos()
 
     fun restart(): GameDriver = apply { engine.restart() }
 }

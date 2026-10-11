@@ -29,12 +29,12 @@ class SaveSystemEdgeCaseTest {
     }
 
     @Test
-    fun saveCarriesVersionAndTimestamp() {
+    fun saveCarriesVersionAndSavedAt() {
         val engine = GameEngine(script, FakeAudioManager())
         engine.start()
-        val json = SaveSystem().save(engine.state.value, slot = 2)
-        assertTrue(json.contains("\"version\":1"))
-        assertTrue(json.contains("\"timestamp\""))
+        val json = SaveSystem().save(engine.state.value, savedAt = 2L)
+        assertTrue(json.contains("\"version\":2"))
+        assertTrue(json.contains("\"savedAt\""))
     }
 
     @Test

@@ -7,8 +7,10 @@ import kotlinx.serialization.encodeToString
 
 @Serializable
 data class SaveData(
-    val version: Int = 1,
-    val timestamp: Long = 0L,
+    val version: Int = 2,
+    val savedAt: Long = 0L,
+    val preview: String? = null,
+    val steps: Int = 0,
     val state: GameStateSnapshot,
     val recentEvents: List<String> = emptyList()
 )
@@ -33,13 +35,19 @@ data class SpriteSnapshot(
     val bias: Float? = null
 )
 
+/** Serializes [GameState] to and from the JSON stored in a [SaveSlot]. */
 class SaveSystem {
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
 
-    fun save(state: GameState, slot: Int = 0): String {
+    fun save(
+        state: GameState,
+        savedAt: Long = 0L,
+        preview: String? = null,
+        steps: Int = state.history.size
+    ): String {
         val snapshot = GameStateSnapshot(
             currentScene = state.currentScene,
             dialogueIndex = state.dialogueIndex,
@@ -50,17 +58,26 @@ class SaveSystem {
             history = state.history
         )
         val saveData = SaveData(
-            version = 1,
-            timestamp = 0L,
+            version = 2,
+            savedAt = savedAt,
+            preview = preview,
+            steps = steps,
             state = snapshot,
             recentEvents = state.history.takeLast(10)
         )
         return json.encodeToString(saveData)
     }
 
+    /** Parses raw save JSON into metadata + snapshot, or null if malformed. */
+    fun parse(saveJson: String): SaveData? = try {
+        json.decodeFromString<SaveData>(saveJson)
+    } catch (e: Exception) {
+        null
+    }
+
     fun load(saveJson: String): GameState? {
+        val saveData = parse(saveJson) ?: return null
         return try {
-            val saveData = json.decodeFromString<SaveData>(saveJson)
             GameState(
                 currentScene = saveData.state.currentScene,
                 dialogueIndex = saveData.state.dialogueIndex,
