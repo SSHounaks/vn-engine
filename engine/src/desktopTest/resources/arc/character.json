@@ -1,0 +1,1 @@
+{"name": "test", "defaultAnimation": "idle", "animations": {"idle": {"loop": true, "frames": [{"src": "frame1.png", "t": 100}, {"src": "frame1.png", "t": 100}]}, "walk": {"loop": true, "frames": [{"src": "frame1.png", "t": 80}]}, "once": {"loop": false, "frames": [{"src": "frame1.png", "t": 50}]}}}

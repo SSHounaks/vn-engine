@@ -6,7 +6,7 @@ build/
 .DS_Store
 
 # Sample/demo content intentionally withheld from the open-source tree
-/src/desktopMain/resources/sprites/
-/src/desktopMain/resources/backgrounds/
-/src/desktopMain/resources/arc/
-/src/commonMain/kotlin/com/vnengine/dsl/SampleGame.kt
+/engine/src/desktopMain/resources/sprites/
+/engine/src/desktopMain/resources/backgrounds/
+/engine/src/desktopMain/resources/arc/
+/engine/src/commonMain/kotlin/com/vnengine/dsl/SampleGame.kt
