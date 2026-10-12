@@ -10,3 +10,6 @@ build/
 /engine/src/desktopMain/resources/backgrounds/
 /engine/src/desktopMain/resources/arc/
 /engine/src/commonMain/kotlin/com/vnengine/dsl/SampleGame.kt
+
+# Local web story override (references withheld sample content)
+/engine/src/wasmJsSample/

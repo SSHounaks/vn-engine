@@ -5,11 +5,11 @@ import androidx.compose.ui.res.loadImageBitmap
 import com.vnengine.anim.Pack
 import kotlinx.serialization.json.Json
 
-object SpriteResources {
+actual object SpriteResources {
     private val json = Json { ignoreUnknownKeys = true }
     private val bitmapCache = mutableMapOf<String, ImageBitmap?>()
 
-    fun loadPack(): Pack? {
+    actual fun loadPack(): Pack? {
         return try {
             val stream = SpriteResources::class.java.getResourceAsStream("/arc/character.json")
                 ?: return null
@@ -20,7 +20,7 @@ object SpriteResources {
         }
     }
 
-    fun loadFrame(src: String): ImageBitmap? {
+    actual fun loadFrame(src: String): ImageBitmap? {
         val path = "/arc/$src"
         return bitmapCache.getOrPut(path) {
             try {
@@ -33,7 +33,7 @@ object SpriteResources {
         }
     }
 
-    fun loadStaticSprite(id: String): ImageBitmap? {
+    actual fun loadStaticSprite(id: String): ImageBitmap? {
         val path = "/sprites/$id.png"
         return bitmapCache.getOrPut(path) {
             try {
@@ -46,7 +46,7 @@ object SpriteResources {
         }
     }
 
-    fun loadBackground(name: String): ImageBitmap? {
+    actual fun loadBackground(name: String): ImageBitmap? {
         val path = "/backgrounds/$name.jpg"
         return bitmapCache.getOrPut(path) {
             try {

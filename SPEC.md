@@ -30,7 +30,7 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 - **Compose Hot Reload** — Use Compose's built-in hot reload for UI changes — free, no extra work
 
 ### Platforms
-- **Desktop + Android** via Kotlin Multiplatform
+- **Desktop + Android + Web (WASM)** via Kotlin Multiplatform
 
 ### Effects & Transitions
 - **Declarative in DSL** — `scene { fade(to = black, duration = 1.seconds) }` — type-safe, composable
@@ -107,7 +107,7 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 - **4-6 months** — Part-time or careful pace — more room for polish and testing
 
 ### Milestones
-- **Feature-based** — M1: Core loop, M2: Save/load, M3: Audio, M4: Effects, M5: Polish, M6: Android
+- **Feature-based** — M1: Core loop, M2: Save/load, M3: Audio, M4: Effects, M5: Polish, M6: Animation, M7: Android, M8: Web (WASM)
 
 ### Documentation
 - **README + samples** — Simple README with a few example scenes — fastest to create
@@ -123,10 +123,10 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 ## Progress Log
 
 - **M1 (Core loop)** ✅ — Scene DSL (game/scene/show/dialogue/timeline), GameEngine with StateFlow, Compose renderer, click-to-advance
-- **M2 (Save/load)** ✅ — SaveSystem (kotlinx.serialization JSON snapshot), SaveSlotManager, forward-compatible schema
+- **M2 (Save/load)** ✅ — SaveSystem (kotlinx.serialization JSON snapshot), multi-slot SaveSlotManager (manual/quick/auto) with metadata, forward-compatible schema
 - **M3 (Audio)** ✅ — expect/actual AudioManager (javax.sound.sampled on desktop), DSL cues bgm/sfx/voice, wired into engine
 - **M4 (Effects)** ✅ — Timeline DSL (fade/dissolve/slide/move/shake/flash/zoom/wait/parallel), EffectRunner scheduler, 60fps tick loop, per-sprite alpha/offset/rotation/scale
 - **M5 (Polish)** ✅ — Typewriter dialogue (click to complete→advance), speaker name plate, named/hex backgrounds, flash + fade overlays, 1280x720 window, real sprites
-- **M6 (Android)** ⏳ — KMP Android target not started
 - **M6 (Animation)** ✅ — Ported review-tool pack system: `character.json` pack + `Animator` (frame timings, loop) in commonMain; `show(id, at, anim = "idle")` DSL; frameSrc-driven rendering with bitmap cache; face-zoom stays active
 - **M7 (Android)** ⏳ — KMP Android target not started
+- **M8 (Web/WASM)** ⏳ — Browser (wasmJs) target not started

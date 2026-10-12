@@ -8,6 +8,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import com.vnengine.dsl.SceneScript
+import com.vnengine.dsl.demoStory
 import com.vnengine.engine.GameEngine
 import com.vnengine.save.FileSaveStorage
 import com.vnengine.save.SaveSlotManager
