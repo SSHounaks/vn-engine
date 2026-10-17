@@ -11,6 +11,8 @@ import com.vnengine.anim.Pack
 import com.vnengine.effect.EffectKind
 import com.vnengine.effect.EffectRunner
 import com.vnengine.effect.ScheduledEffect
+import com.vnengine.live2d.Live2DInstance
+import com.vnengine.live2d.Live2DLoader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +37,7 @@ class GameEngine(
     private val effects = EffectRunner()
     private val sceneCache = mutableMapOf<String, SceneBuilder>()
     private val animators = mutableMapOf<String, Animator>()
+    private val live2d = mutableMapOf<String, Live2DInstance>()
     private val vars = GameVars()
     private val triggeredAnimEffects = mutableSetOf<ScheduledEffect>()
     private var lastAudioCueCount = 0
@@ -109,7 +112,8 @@ class GameEngine(
             effects.build(builder.sprites, builder.timeline.events)
             sceneEffectsDone = effects.scheduled.isEmpty()
             setupAnimators(builder.sprites)
-            val base = builder.sprites.map { SpriteVisual(it.id, it.position, currentFrameOf(it), scale = it.scale) }
+            setupLive2D(builder.sprites)
+            val base = builder.sprites.map { baseVisual(it) }
             _visuals.value = SceneVisual(base)
         }
         updateFrame()
@@ -129,23 +133,64 @@ class GameEngine(
             }
         }
         applyAnimationFrames()
+        applyLive2D(deltaMs)
+    }
+
+    private fun applyLive2D(deltaMs: Long) {
+        if (live2d.isEmpty()) return
+        live2d.values.forEach { it.tick(deltaMs.toDouble()) }
+        _visuals.value = _visuals.value.copy(
+            sprites = _visuals.value.sprites.map { visual ->
+                live2d[visual.id]?.let { visual.copy(live2d = it.toVisual()) } ?: visual
+            }
+        )
     }
 
     private fun triggerAnimationEvents() {
         if (effects.scheduled.isEmpty()) return
         effects.scheduled.forEach { effect ->
             val kind = effect.kind
-            if (kind is EffectKind.Anim && effect !in triggeredAnimEffects) {
-                if (effect.startMs <= effects.elapsedMs) {
+            if (effect.startMs > effects.elapsedMs || effect in triggeredAnimEffects) return@forEach
+            when (kind) {
+                is EffectKind.Anim -> {
                     triggeredAnimEffects += effect
                     animators[kind.sprite]?.play(kind.group, kind.loop)
                 }
+                is EffectKind.Motion -> {
+                    triggeredAnimEffects += effect
+                    live2d[kind.sprite]?.playMotion(kind.name)
+                }
+                is EffectKind.Expression -> {
+                    triggeredAnimEffects += effect
+                    live2d[kind.sprite]?.setExpression(kind.name)
+                }
+                else -> Unit
             }
         }
     }
 
     private fun resetVisuals(): List<SpriteVisual> =
-        currentBaseSprites().map { SpriteVisual(it.id, it.position, currentFrameOf(it), scale = it.scale) }
+        currentBaseSprites().map { baseVisual(it) }
+
+    private fun baseVisual(sprite: com.vnengine.dsl.SpriteRef): SpriteVisual =
+        SpriteVisual(
+            id = sprite.id,
+            position = sprite.position,
+            frameSrc = currentFrameOf(sprite),
+            scale = sprite.scale,
+            live2d = live2d[sprite.id]?.toVisual()
+        )
+
+    private fun setupLive2D(sprites: List<com.vnengine.dsl.SpriteRef>) {
+        live2d.clear()
+        sprites.forEach { sprite ->
+            val model = sprite.live2dModel ?: return@forEach
+            val loaded = Live2DLoader.load(model) ?: return@forEach
+            val instance = Live2DInstance(loaded)
+            instance.show(sprite.motion, sprite.expression)
+            live2d[sprite.id] = instance
+        }
+    }
 
     private fun loadScene(name: String) {
         _state.value = _state.value.copy(
@@ -166,7 +211,8 @@ class GameEngine(
             triggeredAnimEffects.clear()
             sceneEffectsDone = effects.scheduled.isEmpty()
             setupAnimators(builder.sprites)
-            val base = builder.sprites.map { SpriteVisual(it.id, it.position, currentFrameOf(it), scale = it.scale) }
+            setupLive2D(builder.sprites)
+            val base = builder.sprites.map { baseVisual(it) }
             _visuals.value = SceneVisual(base)
         }
         updateFrame()

@@ -50,6 +50,35 @@ class SceneBuilder {
         sprites.add(SpriteRef(sprite, at, anim, loop, scale, layer, bias))
     }
 
+    /**
+     * Shows a Live2D model. [model] is either a model directory or a path to a
+     * `.model3.json` file relative to the asset root. [motion] and [expression]
+     * optionally start an animation, Ren'Py-style.
+     */
+    fun live2d(
+        model: String,
+        at: Position = Position.Center,
+        motion: String? = null,
+        expression: String? = null,
+        scale: Float = 1f,
+        layer: Int = 0,
+        bias: Float? = null
+    ) {
+        val id = com.vnengine.live2d.Live2DPaths.modelId(model)
+        sprites.add(
+            SpriteRef(
+                id = id,
+                position = at,
+                scale = scale,
+                layer = layer,
+                bias = bias,
+                live2dModel = model,
+                motion = motion,
+                expression = expression
+            )
+        )
+    }
+
     fun hide(sprite: String) {
         sprites.removeAll { it.id == sprite }
     }
@@ -120,6 +149,14 @@ class TimelineBuilder {
         events.add(TimelineEvent.Move(sprite, to, toMillis(duration)))
     }
 
+    fun motion(sprite: String, name: String) {
+        events.add(TimelineEvent.Motion(sprite, name))
+    }
+
+    fun expression(sprite: String, name: String) {
+        events.add(TimelineEvent.Expression(sprite, name))
+    }
+
     fun shake(sprite: String, intensity: Float = 8f, duration: Double = 0.5) {
         events.add(TimelineEvent.Shake(sprite, intensity, toMillis(duration)))
     }
@@ -157,8 +194,13 @@ data class SpriteRef(
     val loop: Boolean? = null,
     val scale: Float = 1f,
     val layer: Int = 0,
-    val bias: Float? = null
-)
+    val bias: Float? = null,
+    val live2dModel: String? = null,
+    val motion: String? = null,
+    val expression: String? = null
+) {
+    val isLive2D: Boolean get() = live2dModel != null
+}
 data class DialogueLine(val speaker: String?, val text: String)
 
 sealed class AudioCue {
@@ -176,6 +218,8 @@ sealed class TimelineEvent {
     data class Flash(val color: Int, val durationMs: Long) : TimelineEvent()
     data class Zoom(val sprite: String, val to: Float, val durationMs: Long) : TimelineEvent()
     data class Anim(val sprite: String, val group: String, val durationMs: Long, val loop: Boolean? = null) : TimelineEvent()
+    data class Motion(val sprite: String, val name: String) : TimelineEvent()
+    data class Expression(val sprite: String, val name: String) : TimelineEvent()
     data class Wait(val durationMs: Long) : TimelineEvent()
     data class Parallel(val events: List<TimelineEvent>) : TimelineEvent()
 }

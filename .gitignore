@@ -13,3 +13,7 @@ build/
 
 # Local web story override (references withheld sample content)
 /engine/src/wasmJsSample/
+
+# Live2D: proprietary Cubism Core native library (user-installed) and models
+/local/
+/engine/src/desktopMain/resources/Characters/

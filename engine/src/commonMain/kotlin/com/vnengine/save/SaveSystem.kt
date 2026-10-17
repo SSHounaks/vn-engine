@@ -32,7 +32,10 @@ data class SpriteSnapshot(
     val loop: Boolean? = null,
     val scale: Float = 1f,
     val layer: Int = 0,
-    val bias: Float? = null
+    val bias: Float? = null,
+    val live2dModel: String? = null,
+    val motion: String? = null,
+    val expression: String? = null
 )
 
 /** Serializes [GameState] to and from the JSON stored in a [SaveSlot]. */
@@ -52,7 +55,10 @@ class SaveSystem {
             currentScene = state.currentScene,
             dialogueIndex = state.dialogueIndex,
             visibleSprites = state.visibleSprites.map {
-                SpriteSnapshot(it.id, it.position.name, it.anim, it.loop, it.scale, it.layer, it.bias)
+                SpriteSnapshot(
+                    it.id, it.position.name, it.anim, it.loop, it.scale, it.layer, it.bias,
+                    it.live2dModel, it.motion, it.expression
+                )
             },
             variables = state.variables,
             history = state.history
@@ -89,7 +95,10 @@ class SaveSystem {
                         it.loop,
                         it.scale,
                         it.layer,
-                        it.bias
+                        it.bias,
+                        it.live2dModel,
+                        it.motion,
+                        it.expression
                     )
                 },
                 variables = saveData.state.variables,

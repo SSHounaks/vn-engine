@@ -22,6 +22,8 @@ sealed class EffectKind {
     data class Flash(val color: Int) : EffectKind()
     data class Zoom(val sprite: String, val from: Float, val to: Float) : EffectKind()
     data class Anim(val sprite: String, val group: String, val loop: Boolean? = null) : EffectKind()
+    data class Motion(val sprite: String, val name: String) : EffectKind()
+    data class Expression(val sprite: String, val name: String) : EffectKind()
     object Wait : EffectKind()
 }
 
@@ -104,6 +106,8 @@ class EffectRunner {
                     byId[kind.sprite] = v.copy(scale = kind.from + (kind.to - kind.from) * eased)
                 }
                 is EffectKind.Anim -> Unit
+                is EffectKind.Motion -> Unit
+                is EffectKind.Expression -> Unit
                 EffectKind.Wait -> Unit
             }
         }
@@ -146,6 +150,12 @@ class EffectRunner {
                 is TimelineEvent.Anim -> {
                     scheduled.add(ScheduledEffect(cursor, event.durationMs, EffectKind.Anim(event.sprite, event.group, event.loop)))
                     cursor += event.durationMs
+                }
+                is TimelineEvent.Motion -> {
+                    scheduled.add(ScheduledEffect(cursor, 0L, EffectKind.Motion(event.sprite, event.name)))
+                }
+                is TimelineEvent.Expression -> {
+                    scheduled.add(ScheduledEffect(cursor, 0L, EffectKind.Expression(event.sprite, event.name)))
                 }
                 is TimelineEvent.Wait -> {
                     scheduled.add(ScheduledEffect(cursor, event.durationMs, EffectKind.Wait))

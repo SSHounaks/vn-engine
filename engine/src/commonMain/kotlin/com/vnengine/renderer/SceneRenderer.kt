@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -26,7 +27,10 @@ import com.vnengine.engine.DialogueController
 import com.vnengine.engine.DialogueDisplay
 import com.vnengine.engine.GameEngine
 import com.vnengine.engine.SpriteVisual
+import com.vnengine.live2d.Live2DRuntime
+import com.vnengine.live2d.Live2DVisual
 import kotlinx.coroutines.delay
+import kotlin.time.TimeSource
 
 private val SceneBackground = Color(0xFF1A1A2E)
 private val PanelBackground = Color(0xFF16213E).copy(alpha = 0.95f)
@@ -54,13 +58,18 @@ fun SceneRenderer(engine: GameEngine) {
     }
 
     LaunchedEffect(Unit) {
+        val clock = TimeSource.Monotonic
+        var last = clock.markNow()
         while (true) {
-            engine.tick(16L)
+            delay(16L)
+            val now = clock.markNow()
+            val delta = (now - last).inWholeMilliseconds.coerceIn(16L, 100L)
+            last = now
+            engine.tick(delta)
             if (!controller.complete && controller.text.isNotEmpty()) {
-                controller.tick(16L)
+                controller.tick(delta)
                 if (shown != controller.shown) shown = controller.shown
             }
-            delay(16L)
         }
     }
 
@@ -264,6 +273,10 @@ private fun SpriteView(sprite: SpriteRef, visual: SpriteVisual) {
             .padding(horizontal = 24.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
+        if (sprite.isLive2D) {
+            Live2DModelView(sprite, visual.live2d)
+            return@BoxWithConstraints
+        }
         val bias = sprite.bias ?: when (sprite.position) {
             Position.Left -> -0.62f
             Position.Center -> 0f
@@ -310,6 +323,109 @@ private fun SpriteView(sprite: SpriteRef, visual: SpriteVisual) {
             }
         }
     }
+}
+
+@Composable
+private fun Live2DModelView(sprite: SpriteRef, live: Live2DVisual?) {
+    val renderer = live?.let { Live2DRuntime.renderer(it.modelPath) }
+    if (renderer == null) {
+        Live2DPreview(sprite, live)
+        return
+    }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val widthPx = constraints.maxWidth.coerceAtLeast(1)
+        val heightPx = constraints.maxHeight.coerceAtLeast(1)
+        var frame by remember { mutableStateOf<ImageBitmap?>(null) }
+        val parameters = live.parameters
+        val partOpacities = live.partOpacities
+        val modelId = live.modelId
+
+        LaunchedEffect(parameters, partOpacities, widthPx, heightPx) {
+            renderer.setParameterValues(parameters)
+            renderer.setPartOpacities(partOpacities)
+            frame = renderer.render(widthPx, heightPx)
+        }
+
+        frame?.let {
+            Image(
+                bitmap = it,
+                contentDescription = modelId,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
+        }
+    }
+}
+
+@Composable
+private fun Live2DPreview(sprite: SpriteRef, live: Live2DVisual?) {
+    val id = live?.modelId ?: sprite.id
+    val motion = live?.motion ?: sprite.motion
+    val expression = live?.expression ?: sprite.expression
+    val params = live?.parameters.orEmpty()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxHeight(0.92f)
+                .widthIn(max = 360.dp)
+                .aspectRatio(0.62f),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = PanelBackground)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("LIVE2D", color = AccentColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(id, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                Text("motion: ${motion ?: "---"}", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                Text("expression: ${expression ?: "---"}", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                when {
+                    live == null -> Text("model unavailable", color = AccentColor, fontSize = 12.sp)
+                    !live.supported -> Text(
+                        "Cubism Core not installed \u2014 parameter preview",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 11.sp
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                params.entries.sortedBy { it.key }.take(8).forEach { (name, value) ->
+                    ParameterBar(name, value)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ParameterBar(name: String, value: Double) {
+    val fraction = ((value + 30.0) / 60.0).coerceIn(0.0, 1.0).toFloat()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(name, color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
+            Text(formatParameter(value), color = Color.White.copy(alpha = 0.7f), fontSize = 10.sp)
+        }
+        Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF0F3460))) {
+            Box(modifier = Modifier.fillMaxWidth(fraction).fillMaxHeight().background(AccentColor))
+        }
+    }
+}
+
+private fun formatParameter(value: Double): String {
+    val rounded = (value * 10.0).toLong() / 10.0
+    return if (rounded == rounded.toLong().toDouble()) rounded.toLong().toString() else rounded.toString()
 }
 
 private fun backgroundFor(name: String?): Color = when (name) {

@@ -37,6 +37,16 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 - **Effect stack/pipeline** — Effects as reusable composable functions applied to scenes
 - **Custom GPU shader slot** — Provide escape hatch for users to write their own GLSL shaders, but not default
 
+### Live2D Cubism
+- **Goal** — Support animated 2D characters (Live2D Cubism 3/4/5) like Ren'Py: layered meshes whose shape is driven by parameters, animated by motions and expressions
+- **Asset formats** — `.model3.json` (+ `.moc3`), `.motion3.json`, `.expression3.json`, and texture atlases
+- **Approach (mirrors Ren'Py)** — Parse motions/expressions and blend parameter values in `commonMain`; delegate mesh deformation and rasterization to a platform `Live2DBackend` (expect/actual) wrapping the Cubism Core SDK
+- **Desktop backend** — Binds `Live2DCubismCore` at runtime via JNA (moc revive/init, parameters, drawable vertex/UV/index data, `csmUpdateModel`) and rasterizes textured triangles with Skia into an `ImageBitmap` (OpenGL-convention coordinates/UVs inverted to Skia's top-left origin); clipping masks and per-drawable multiply/screen colors applied; offscreens not yet
+- **SDK not vendored** — Cubism Core is proprietary; the user installs the Cubism SDK per platform (native/web/Android). The desktop backend loads `Live2DCubismCore` from the library path (override with `-Dvnengine.cubism.core=...`). A missing backend degrades gracefully (mirrors Ren'Py's `renpy.has_live2d()` / fallback displayable)
+- **DSL** — `live2d("Characters/Hiyori", at = Position.Center, motion = "m01", expression = "happy")`; timeline events `motion("Hiyori", "m02")` / `expression("Hiyori", "sad")`; motion/expression names normalized from the model3 file (lowercased, file-stem + group aliases)
+- **Motion features** — motion fading (parameter interpolation between motions), exclusive vs nonexclusive expressions, `null`/`still` specials, loop control
+- **Fallback** — when unavailable, render a static sprite in place of the model so games still run
+
 ### Complex Transitions
 - **Declarative timeline** — Define a timeline of events with durations — engine plays them back (e.g., character walks while background changes)
 
@@ -95,7 +105,7 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 - **No, keep it closed** — Simpler architecture, faster to ship
 
 ### Project Structure
-- **Single module** — Everything in one Gradle module — simplest, fastest to start
+- **Multi-module (evolved)** — `engine` (library, commonMain + per-platform actuals) published as a dependency; `desktop`, `harness` as sample/test consumers. (Originally planned as a single module; split for clear API/publishing boundaries.)
 
 ### MVP Scope
 - **Core loop + save/load + audio** — Dialogue, sprites, choices, save/load, and audio (BGM/SFX/voice)
@@ -107,7 +117,7 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 - **4-6 months** — Part-time or careful pace — more room for polish and testing
 
 ### Milestones
-- **Feature-based** — M1: Core loop, M2: Save/load, M3: Audio, M4: Effects, M5: Polish, M6: Animation, M7: Android, M8: Web (WASM)
+- **Feature-based** — M1: Core loop, M2: Save/load, M3: Audio, M4: Effects, M5: Polish, M6: Animation, M7: Android, M8: Web (WASM), M9: Live2D
 
 ### Documentation
 - **README + samples** — Simple README with a few example scenes — fastest to create
@@ -129,4 +139,5 @@ A modern visual novel engine written in Kotlin, rivaling Ren'Py with better type
 - **M5 (Polish)** ✅ — Typewriter dialogue (click to complete→advance), speaker name plate, named/hex backgrounds, flash + fade overlays, 1280x720 window, real sprites
 - **M6 (Animation)** ✅ — Ported review-tool pack system: `character.json` pack + `Animator` (frame timings, loop) in commonMain; `show(id, at, anim = "idle")` DSL; frameSrc-driven rendering with bitmap cache; face-zoom stays active
 - **M7 (Android)** ⏳ — KMP Android target not started
-- **M8 (Web/WASM)** ⏳ — Browser (wasmJs) target not started
+- **M8 (Web/WASM)** ✅ — Opt-in `wasmJs` target (`-PenableWasm=true`): `SceneRenderer` moved to commonMain, `SpriteResources` expect/actual, synchronous web asset loading + Skia decode, `ComposeViewport` entry + `index.html`; asset-free `demoStory` in commonMain with local sample override via `-PsampleStory=true`
+- **M9 (Live2D)** ⏳ — In progress: Cubism model/motion/expression parsing + clipping, motion/expression blending and `Live2DInstance` playback in `commonMain` (done, tested); DSL `live2d(...)` + timeline `motion`/`expression` + engine wiring + static-preview fallback (done). Desktop `Live2DBackend` (Cubism Core via JNA + Skia rasterization, incl. clipping masks and multiply/screen colors) done; pending: web/Android backends and offscreens

@@ -60,6 +60,8 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(compose.material3)
+                // Runtime binding to the (user-installed) Cubism Core native library.
+                implementation("net.java.dev.jna:jna:5.14.0")
             }
         }
         if (enableWasm) {
