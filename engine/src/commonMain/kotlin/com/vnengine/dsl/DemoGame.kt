@@ -32,9 +32,31 @@ val demoStory: SceneScript = game {
             expression("Haru", "F02")
         }
         dialogue("Narrator", "Timeline events can switch motions and expressions at any point.")
-        next("end")
+        next("haru_top")
     }
 
+    scene("haru_top") {
+        background("#0a0f1f")
+        live2d(
+            "Characters/Haru",
+            at = Position.Center,
+            motion = "Idle",
+            expression = "F01",
+            anchorTop = true
+        )
+        dialogue("Haru", "I'm showing from the upper half.")
+        dialogue("Haru", "Tap to change pose and expression.")
+        timeline {
+            motion("Haru", "TapBody")
+            expression("Haru", "F02")
+        }
+        dialogue("Haru", "Different expression.")
+        timeline {
+            expression("Haru", "F03")
+        }
+        dialogue("Haru", "Back to idle-like expression.")
+        next("end")
+    }
     scene("end") {
         dialogue("Narrator", "That's all for now.")
     }

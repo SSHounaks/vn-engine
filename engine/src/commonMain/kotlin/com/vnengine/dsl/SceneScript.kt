@@ -62,7 +62,8 @@ class SceneBuilder {
         expression: String? = null,
         scale: Float = 1f,
         layer: Int = 0,
-        bias: Float? = null
+        bias: Float? = null,
+        anchorTop: Boolean = false
     ) {
         val id = com.vnengine.live2d.Live2DPaths.modelId(model)
         sprites.add(
@@ -74,7 +75,8 @@ class SceneBuilder {
                 bias = bias,
                 live2dModel = model,
                 motion = motion,
-                expression = expression
+                expression = expression,
+                anchorTop = anchorTop
             )
         )
     }
@@ -197,7 +199,8 @@ data class SpriteRef(
     val bias: Float? = null,
     val live2dModel: String? = null,
     val motion: String? = null,
-    val expression: String? = null
+    val expression: String? = null,
+    val anchorTop: Boolean = false
 ) {
     val isLive2D: Boolean get() = live2dModel != null
 }

@@ -337,10 +337,10 @@ private fun Live2DModelView(sprite: SpriteRef, live: Live2DVisual?) {
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = if (sprite.anchorTop) Alignment.TopCenter else Alignment.Center
     ) {
         val widthPx = constraints.maxWidth.coerceAtLeast(1)
-        val heightPx = constraints.maxHeight.coerceAtLeast(1)
+        val heightPx = if (sprite.anchorTop) (constraints.maxHeight.coerceAtLeast(1) * 2) else constraints.maxHeight.coerceAtLeast(1)
         var frame by remember { mutableStateOf<ImageBitmap?>(null) }
         val parameters = live.parameters
         val partOpacities = live.partOpacities
@@ -356,8 +356,11 @@ private fun Live2DModelView(sprite: SpriteRef, live: Live2DVisual?) {
             Image(
                 bitmap = it,
                 contentDescription = modelId,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (sprite.anchorTop) Modifier.fillMaxHeight(0.5f) else Modifier.fillMaxSize()),
+                contentScale = ContentScale.Fit,
+                alignment = if (sprite.anchorTop) Alignment.TopCenter else Alignment.Center
             )
         }
     }
