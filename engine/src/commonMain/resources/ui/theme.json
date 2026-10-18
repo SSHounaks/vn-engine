@@ -1,0 +1,10 @@
+{
+  "panelColor": "#CC111827",
+  "accentColor": "#FF7FA3FF",
+  "textColor": "#FFFFFFFF",
+  "mutedTextColor": "#CCFFFFFF",
+  "cornerRadius": 12,
+  "padding": 16,
+  "dialogueAnchor": "bottom",
+  "dialogueMaxWidth": 720
+}
